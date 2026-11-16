@@ -1,0 +1,6 @@
+{
+  "name": "Sultan Biryani and Grill",
+  "description": "Authentic Dum Biryani, Charcoal BBQ, Wraps, and Fast Food in Multan. Order online for Home Delivery, Takeaway, or Dine-In.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

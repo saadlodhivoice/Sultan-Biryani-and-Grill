@@ -1,0 +1,224 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated customer profile for Sultan Biryani and Grill.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "email": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 150
+        },
+        "photoURL": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "defaultArea": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "phone": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "whatsapp": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "preferredOrderType": {
+          "type": "string",
+          "enum": ["delivery", "takeaway", "dine_in"],
+          "maxLength": 20
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "displayName", "email", "createdAt", "updatedAt"]
+    },
+    "SavedAddress": {
+      "title": "SavedAddress",
+      "description": "Customer saved Multan delivery address.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "areaName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "streetAddress": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 250
+        },
+        "phone": {
+          "type": "string",
+          "minLength": 7,
+          "maxLength": 20
+        },
+        "distanceKm": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["userId", "label", "areaName", "streetAddress", "phone", "distanceKm", "createdAt", "updatedAt"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer food order with delivery, takeaway, or dine-in details.",
+      "type": "object",
+      "properties": {
+        "orderNumber": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 32,
+          "pattern": "^[A-Z0-9\\-]+$"
+        },
+        "userId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "customerName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "customerPhone": {
+          "type": "string",
+          "minLength": 7,
+          "maxLength": 20
+        },
+        "orderType": {
+          "type": "string",
+          "enum": ["delivery", "takeaway", "dine_in"],
+          "maxLength": 20
+        },
+        "areaName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "deliveryAddress": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "items": {
+          "type": "array",
+          "description": "Bounded list of ordered items (max 25 items)."
+        },
+        "subtotal": {
+          "type": "number"
+        },
+        "deliveryFee": {
+          "type": "number"
+        },
+        "discountAmount": {
+          "type": "number"
+        },
+        "totalAmount": {
+          "type": "number"
+        },
+        "paymentMethod": {
+          "type": "string",
+          "enum": ["cod"],
+          "maxLength": 10
+        },
+        "status": {
+          "type": "string",
+          "enum": ["confirmed", "cooking", "out_for_delivery", "delivered", "cancelled"],
+          "maxLength": 25
+        },
+        "estimatedMinutes": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "orderNumber",
+        "userId",
+        "customerName",
+        "customerPhone",
+        "orderType",
+        "areaName",
+        "deliveryAddress",
+        "items",
+        "subtotal",
+        "deliveryFee",
+        "discountAmount",
+        "totalAmount",
+        "paymentMethod",
+        "status",
+        "estimatedMinutes",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Owner-isolated user profile documents including contact & preferences."
+    },
+    "/users/{userId}/addresses/{addressId}": {
+      "schema": {
+        "$ref": "#/entities/SavedAddress"
+      },
+      "description": "Customer saved delivery addresses under their user profile."
+    },
+    "/orders/{orderId}": {
+      "schema": {
+        "$ref": "#/entities/Order"
+      },
+      "description": "Customer orders isolated by userId for dashboard history, confirmed-state editing, and live tracking."
+    }
+  }
+}

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script>
+      (function () {
+        try {
+          var desc = Object.getOwnPropertyDescriptor(window, 'fetch');
+          if (desc && desc.get && !desc.set && desc.configurable) {
+            var currentFetch = desc.get.call(window);
+            Object.defineProperty(window, 'fetch', {
+              configurable: true,
+              enumerable: desc.enumerable,
+              get: function () { return currentFetch; },
+              set: function (fn) { currentFetch = fn; }
+            });
+          }
+        } catch (_) {}
+        window.addEventListener('error', function (e) {
+          if (e && typeof e.filename === 'string' && e.filename.indexOf('chrome-extension://') === 0) {
+            e.stopImmediatePropagation();
+            e.preventDefault();
+          }
+        }, true);
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sultan Biryani and Grill — Multan</title>
+    <meta name="description" content="Authentic Dum Biryani, Charcoal BBQ, Wraps, and Fast Food in Multan. Order online for Home Delivery, Takeaway, or Dine-In." />
+    <meta property="og:title" content="Sultan Biryani and Grill — Multan" />
+    <meta property="og:description" content="Authentic Dum Biryani, Charcoal BBQ, Wraps, and Fast Food in Multan. Order online for Home Delivery, Takeaway, or Dine-In." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/png" href="/assets/aistudio/Sultan_Biryani_and_Grill_3fdb02a0.png" />
+    <link rel="apple-touch-icon" href="/assets/aistudio/Sultan_Biryani_and_Grill_3fdb02a0.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Outfit:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body class="antialiased selection:bg-red-700 selection:text-white">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
