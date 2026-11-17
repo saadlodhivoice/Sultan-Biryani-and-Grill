@@ -759,7 +759,7 @@ export default function App() {
       </div>
 
       {/* Left-side Floating WhatsApp Button with Dynamic Hourly Wait Time Tooltip */}
-      <FloatingWhatsApp />
+      <FloatingWhatsApp visible={splashDone} autoExpandOnMount />
 
       {/* Order Tracking Trigger appears ONLY after an order has been placed */}
       {activeTrackingOrder && !trackingModalOpen && (
