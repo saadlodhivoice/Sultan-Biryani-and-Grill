@@ -12,7 +12,15 @@ import {
 dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PORT = Number(process.env.PORT || 3000);
+const portArgIdx = process.argv.indexOf('--port');
+const cliPort = portArgIdx >= 0 ? Number(process.argv[portArgIdx + 1]) : NaN;
+const isProdEnv = process.env.NODE_ENV === 'production';
+const PORT =
+  Number.isFinite(cliPort) && cliPort > 0
+    ? cliPort
+    : isProdEnv
+      ? Number(process.env.PORT || 3000)
+      : 3000;
 
 // Backend-only daily fuel index for automated Multan delivery calculation.
 // Updated daily via cached backend rate so delivery fees track local transport costs automatically.
@@ -45,6 +53,20 @@ async function createServer() {
 
   app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok', service: 'sultan-biryani-and-grill' });
+  });
+
+  app.post('/api/analytics/event', (req, res) => {
+    const { event, source, timestamp } = req.body ?? {};
+    if (typeof event !== 'string' || !event.trim()) {
+      res.status(400).json({ error: 'Valid event name required' });
+      return;
+    }
+    res.status(202).json({
+      accepted: true,
+      event: event.slice(0, 64),
+      source: typeof source === 'string' ? source.slice(0, 64) : 'unknown',
+      receivedAt: timestamp ?? new Date().toISOString(),
+    });
   });
 
   app.post('/api/resolve-area', (req, res) => {

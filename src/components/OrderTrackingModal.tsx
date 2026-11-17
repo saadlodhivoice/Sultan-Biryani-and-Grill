@@ -11,6 +11,7 @@ import {
   X,
 } from 'lucide-react';
 import { RESTAURANT_LOCATION, formatPKR } from '../data/multanAreas.ts';
+import { trackConversionEvent } from '../lib/analytics.ts';
 import type { OrderRecord, OrderStatus } from '../types.ts';
 
 interface OrderTrackingModalProps {
@@ -241,6 +242,12 @@ export function OrderTrackingModal({
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() =>
+                  trackConversionEvent('whatsapp_order_click', 'order_tracking_modal', {
+                    orderNumber: order.orderNumber,
+                    orderStatus: order.status,
+                  })
+                }
                 className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors"
               >
                 <Phone className="w-4 h-4" />

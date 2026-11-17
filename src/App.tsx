@@ -24,6 +24,7 @@ import { HeroSlider } from './components/HeroSlider.tsx';
 import { LocationModal } from './components/LocationModal.tsx';
 import { MenuSection } from './components/MenuSection.tsx';
 import { Navbar } from './components/Navbar.tsx';
+import { OrderStatusToast, type OrderToastItem } from './components/OrderStatusToast.tsx';
 import { OrderTrackingModal } from './components/OrderTrackingModal.tsx';
 import { PromoBanner } from './components/PromoBanner.tsx';
 import { QuickReorderModal } from './components/QuickReorderModal.tsx';
@@ -108,8 +109,10 @@ export default function App() {
   const [activeTrackingOrder, setActiveTrackingOrder] = useState<OrderRecord | null>(null);
   const [trackingModalOpen, setTrackingModalOpen] = useState(false);
   const [quickReorderOrder, setQuickReorderOrder] = useState<OrderRecord | null>(null);
+  const [orderToasts, setOrderToasts] = useState<OrderToastItem[]>([]);
 
   const cartButtonRef = useRef<HTMLButtonElement | null>(null);
+  const knownOrderStatusesRef = useRef<Map<string, OrderStatus>>(new Map());
 
   // Sync Tailwind .dark class on <html>
   useEffect(() => {
@@ -189,6 +192,7 @@ export default function App() {
         }
       } else {
         setUser(null);
+        knownOrderStatusesRef.current.clear();
         setOrders((prev) => prev.filter((o) => o.isLocalOnly));
         setSavedAddresses([]);
       }
@@ -444,6 +448,46 @@ export default function App() {
     return createdOrder;
   };
 
+  const dismissOrderToast = useCallback((toastId: string) => {
+    setOrderToasts((prev) => prev.filter((t) => t.id !== toastId));
+  }, []);
+
+  const pushOrderStatusToast = useCallback(
+    (order: OrderRecord, previousStatus: OrderStatus, nextStatus: OrderStatus) => {
+      if (localStorage.getItem('sultan_order_alerts_v1') === 'false') return;
+      const toastId = `${order.id}-${nextStatus}-${Date.now()}`;
+      setOrderToasts((prev) => {
+        const alreadyShown = prev.some(
+          (t) => t.order.id === order.id && t.nextStatus === nextStatus
+        );
+        if (alreadyShown) return prev;
+        return [
+          {
+            id: toastId,
+            order,
+            previousStatus,
+            nextStatus,
+            createdAt: Date.now(),
+          },
+          ...prev,
+        ].slice(0, 3);
+      });
+    },
+    []
+  );
+
+  // Detect any status change across active/tracked orders (from Firestore onSnapshot or stage transitions)
+  useEffect(() => {
+    const map = knownOrderStatusesRef.current;
+    for (const order of orders) {
+      const prevStatus = map.get(order.id);
+      if (prevStatus && prevStatus !== order.status) {
+        pushOrderStatusToast(order, prevStatus, order.status);
+      }
+      map.set(order.id, order.status);
+    }
+  }, [orders, pushOrderStatusToast]);
+
   const handleAdvanceOrderStatus = useCallback(
     async (orderId: string, nextStatus: OrderStatus) => {
       setOrders((prev) =>
@@ -466,6 +510,31 @@ export default function App() {
     },
     [user]
   );
+
+  // Continue advancing active tracked order smoothly while customer browses outside tracking/dashboard modals
+  useEffect(() => {
+    if (!activeTrackingOrder || trackingModalOpen || dashboardOpen) return;
+    if (
+      activeTrackingOrder.status === 'delivered' ||
+      activeTrackingOrder.status === 'cancelled'
+    ) {
+      return;
+    }
+
+    const nextMap: Partial<Record<OrderStatus, OrderStatus>> = {
+      confirmed: 'cooking',
+      cooking: 'out_for_delivery',
+      out_for_delivery: 'delivered',
+    };
+    const nextStatus = nextMap[activeTrackingOrder.status];
+    if (!nextStatus) return;
+
+    const timer = window.setTimeout(() => {
+      void handleAdvanceOrderStatus(activeTrackingOrder.id, nextStatus);
+    }, 8500);
+
+    return () => window.clearTimeout(timer);
+  }, [activeTrackingOrder, trackingModalOpen, dashboardOpen, handleAdvanceOrderStatus]);
 
   const handleUpdateProfile = async (patch: {
     displayName: string;
@@ -778,6 +847,15 @@ export default function App() {
         open={trackingModalOpen}
         onClose={() => setTrackingModalOpen(false)}
         onAdvanceStatus={handleAdvanceOrderStatus}
+      />
+
+      <OrderStatusToast
+        toasts={orderToasts}
+        onDismiss={dismissOrderToast}
+        onInspectOrder={(order) => {
+          setActiveTrackingOrder(order);
+          setTrackingModalOpen(true);
+        }}
       />
     </div>
   );
