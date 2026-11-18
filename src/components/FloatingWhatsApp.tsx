@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Clock } from 'lucide-react';
 import { RESTAURANT_LOCATION } from '../data/multanAreas.ts';
+import { useCollapseOnScrollOrOutsideClick } from '../hooks/useCollapseOnScrollOrOutsideClick.ts';
 import { trackConversionEvent } from '../lib/analytics.ts';
 
 const IDLE_THRESHOLD_MS = 30_000;
@@ -47,6 +48,7 @@ export function FloatingWhatsApp({
   const [autoExpanded, setAutoExpanded] = useState(false);
   const [isIdle, setIsIdle] = useState(false);
   const hasAutoExpandedRef = useRef(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const [waitUpdatesEnabled, setWaitUpdatesEnabled] = useState<boolean>(() => {
     try {
       return localStorage.getItem(WAIT_TIME_PREF_KEY) !== 'false';
@@ -139,10 +141,18 @@ export function FloatingWhatsApp({
   const showTooltip = hovered || autoExpanded;
   const showIdlePulse = isIdle && !showTooltip && waitUpdatesEnabled;
 
+  const collapseTooltip = useCallback(() => {
+    setHovered(false);
+    setAutoExpanded(false);
+  }, []);
+
+  useCollapseOnScrollOrOutsideClick(visible && showTooltip, containerRef, collapseTooltip);
+
   return (
     <AnimatePresence>
       {visible && (
         <motion.div
+          ref={containerRef}
           key="floating-whatsapp-container"
           initial={{ opacity: 0, y: 26, scale: 0.72 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
